@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>br.ufc.quixada</groupId>
+    <artifactId>rmi-rh</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- Biblioteca JSON para representação externa de dados -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <plugins>
+            <!-- Plugin para criar JARs executáveis separados -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <!-- JAR do servidor -->
+                    <execution>
+                        <id>server-jar</id>
+                        <phase>package</phase>
+                        <goals><goal>jar</goal></goals>
+                        <configuration>
+                            <classifier>server</classifier>
+                            <archive>
+                                <manifest>
+                                    <mainClass>server.RHServer</mainClass>
+                                    <addClasspath>true</addClasspath>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <!-- JAR do cliente -->
+                    <execution>
+                        <id>client-jar</id>
+                        <phase>package</phase>
+                        <goals><goal>jar</goal></goals>
+                        <configuration>
+                            <classifier>client</classifier>
+                            <archive>
+                                <manifest>
+                                    <mainClass>client.RHClient</mainClass>
+                                    <addClasspath>true</addClasspath>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Plugin para copiar dependências junto com os JARs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-deps</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
