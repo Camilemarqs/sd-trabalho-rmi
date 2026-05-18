@@ -2,16 +2,23 @@ package server;
 
 import common.*;
 import org.json.JSONObject;
+import protocol.Message;
+import protocol.RequestReplyProtocol;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ColaboradorService {
+public class ColaboradorServiceImpl extends UnicastRemoteObject implements RemoteService {
 
     private final ConcurrentHashMap<Integer, Colaborador> repositorio = new ConcurrentHashMap<>();
+    private final RequestReplyProtocol protocol = new RequestReplyProtocol();
 
-    public ColaboradorService() {
+    public ColaboradorServiceImpl() throws RemoteException {
+        super();
         repositorio.put(1, new Funcionario(1, "Ana Lima",    4500.0, "Analista",  "01/03/2022"));
         repositorio.put(2, new Estagiario(2, "Carlos Melo",  1200.0, "Ciência da Computação", 30));
         repositorio.put(3, new Autonomo  (3, "Diana Souza",  8000.0, "UX Designer", "12.345.678/0001-99"));
@@ -19,7 +26,24 @@ public class ColaboradorService {
                 "15/06/2018", 12000.0, 7));
     }
 
-    public byte[] invocar(String method, String argsJson) {
+    @Override
+    public byte[] processRequest(byte[] requestFrame) throws RemoteException {
+        try {
+            protocol.receiveIncoming(requestFrame);
+            protocol.getRequest();
+            Message req = protocol.getLastRequest();
+
+            System.out.println("[SERVER] Recebido: " + req);
+
+            byte[] result = invocar(req.getMethodId(), req.getArguments());
+            return protocol.sendReply(result, null, 0);
+
+        } catch (IOException e) {
+            throw new RemoteException("Erro ao processar requisição", e);
+        }
+    }
+
+    byte[] invocar(String method, String argsJson) {
         return switch (method) {
             case "adicionarColaborador"  -> adicionarColaborador(argsJson);
             case "buscarColaborador"     -> buscarColaborador(argsJson);
@@ -88,12 +112,8 @@ public class ColaboradorService {
         return resp.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    public Colaborador buscarPorId(int id) {
+    Colaborador buscarPorId(int id) {
         return repositorio.get(id);
-    }
-
-    public ConcurrentHashMap<Integer, Colaborador> getRepositorio() {
-        return repositorio;
     }
 
     private byte[] erro(String msg) {

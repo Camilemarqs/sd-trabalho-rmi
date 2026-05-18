@@ -1,30 +1,31 @@
 package client;
 
 import common.*;
-import protocol.RequestReplyProtocol;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import protocol.RequestReplyProtocol;
 
-import java.io.IOException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Scanner;
 
 public class RHClient {
 
     private static final String HOST = "localhost";
-    private static final int    PORT = 5555;
+    private static final int REGISTRY_PORT = RemoteObjectRef.DEFAULT_REGISTRY_PORT;
 
     private final RequestReplyProtocol protocol = new RequestReplyProtocol();
     private final RemoteObjectRef colaboradorRef;
     private final RemoteObjectRef departamentoRef;
 
     public RHClient() {
-        this.colaboradorRef   = new RemoteObjectRef(HOST, PORT, "ColaboradorService");
-        this.departamentoRef  = new RemoteObjectRef(HOST, PORT, "DepartamentoService");
+        this.colaboradorRef  = new RemoteObjectRef(HOST, REGISTRY_PORT, "ColaboradorService");
+        this.departamentoRef = new RemoteObjectRef(HOST, REGISTRY_PORT, "DepartamentoService");
     }
 
-    public void listarColaboradores() throws IOException {
-        byte[] respBytes = protocol.doOperation(colaboradorRef, "listarColaboradores",
+    public void listarColaboradores() throws RemoteException, NotBoundException {
+        byte[] respBytes = protocol.doOperation(colaboradorRef, MethodIds.LISTAR_COLABORADORES,
                 "{}".getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         JSONArray lista = resp.getJSONArray("colaboradores");
@@ -35,11 +36,11 @@ public class RHClient {
         System.out.println("──────────────────────────────────────────────────");
     }
 
-    public void buscarColaborador(int id) throws IOException {
+    public void buscarColaborador(int id) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("id", id);
 
-        byte[] respBytes = protocol.doOperation(colaboradorRef, "buscarColaborador",
+        byte[] respBytes = protocol.doOperation(colaboradorRef, MethodIds.BUSCAR_COLABORADOR,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
 
@@ -55,35 +56,35 @@ public class RHClient {
         }
     }
 
-    public void adicionarColaborador(Colaborador colaborador) throws IOException {
+    public void adicionarColaborador(Colaborador colaborador) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("colaborador", JsonSerializer.colaboradorParaJson(colaborador));
 
-        byte[] respBytes = protocol.doOperation(colaboradorRef, "adicionarColaborador",
+        byte[] respBytes = protocol.doOperation(colaboradorRef, MethodIds.ADICIONAR_COLABORADOR,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         System.out.println("  " + resp.getString("mensagem"));
     }
 
-    public void removerColaborador(int id) throws IOException {
+    public void removerColaborador(int id) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("id", id);
 
-        byte[] respBytes = protocol.doOperation(colaboradorRef, "removerColaborador",
+        byte[] respBytes = protocol.doOperation(colaboradorRef, MethodIds.REMOVER_COLABORADOR,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         System.out.println("  " + resp.getString("mensagem"));
     }
 
-    public void calcularFolhaTotal() throws IOException {
-        byte[] respBytes = protocol.doOperation(colaboradorRef, "calcularFolhaTotal",
+    public void calcularFolhaTotal() throws RemoteException, NotBoundException {
+        byte[] respBytes = protocol.doOperation(colaboradorRef, MethodIds.CALCULAR_FOLHA_TOTAL,
                 "{}".getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         System.out.printf("  Folha total da empresa: R$%.2f%n", resp.getDouble("folhaTotal"));
     }
 
-    public void listarDepartamentos() throws IOException {
-        byte[] respBytes = protocol.doOperation(departamentoRef, "listarDepartamentos",
+    public void listarDepartamentos() throws RemoteException, NotBoundException {
+        byte[] respBytes = protocol.doOperation(departamentoRef, MethodIds.LISTAR_DEPARTAMENTOS,
                 "{}".getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         JSONArray lista = resp.getJSONArray("departamentos");
@@ -94,10 +95,10 @@ public class RHClient {
         System.out.println("──────────────────────────────────────────────────");
     }
 
-    public void buscarDepartamento(int id) throws IOException {
+    public void buscarDepartamento(int id) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("id", id);
-        byte[] respBytes = protocol.doOperation(departamentoRef, "buscarDepartamento",
+        byte[] respBytes = protocol.doOperation(departamentoRef, MethodIds.BUSCAR_DEPARTAMENTO,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
 
@@ -113,33 +114,33 @@ public class RHClient {
         }
     }
 
-    public void criarDepartamento(int id, String nome, Integer idGerente) throws IOException {
+    public void criarDepartamento(int id, String nome, Integer idGerente) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("id", id);
         args.put("nome", nome);
         if (idGerente != null) args.put("idGerente", idGerente);
 
-        byte[] respBytes = protocol.doOperation(departamentoRef, "criarDepartamento",
+        byte[] respBytes = protocol.doOperation(departamentoRef, MethodIds.CRIAR_DEPARTAMENTO,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         System.out.println("  " + resp.getString("mensagem"));
     }
 
-    public void adicionarColaboradorAoDepartamento(int idDept, int idColab) throws IOException {
+    public void adicionarColaboradorAoDepartamento(int idDept, int idColab) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("idDepartamento", idDept);
         args.put("idColaborador", idColab);
 
-        byte[] respBytes = protocol.doOperation(departamentoRef, "adicionarColaboradorAoDepartamento",
+        byte[] respBytes = protocol.doOperation(departamentoRef, MethodIds.ADICIONAR_COLABORADOR_AO_DEPARTAMENTO,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         System.out.println("  " + resp.getString("mensagem"));
     }
 
-    public void calcularFolhaDepartamento(int id) throws IOException {
+    public void calcularFolhaDepartamento(int id) throws RemoteException, NotBoundException {
         JSONObject args = new JSONObject();
         args.put("id", id);
-        byte[] respBytes = protocol.doOperation(departamentoRef, "calcularFolhaDepartamento",
+        byte[] respBytes = protocol.doOperation(departamentoRef, MethodIds.CALCULAR_FOLHA_DEPARTAMENTO,
                 args.toString().getBytes());
         JSONObject resp = new JSONObject(new String(respBytes));
         if (resp.has("folha")) {
@@ -222,7 +223,7 @@ public class RHClient {
                 }
             } catch (NumberFormatException e) {
                 System.out.println("  Entrada inválida.");
-            } catch (IOException e) {
+            } catch (RemoteException | NotBoundException e) {
                 System.err.println("  Erro de comunicação com o servidor: " + e.getMessage());
             }
         }

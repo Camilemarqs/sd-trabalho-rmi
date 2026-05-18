@@ -2,31 +2,55 @@ package server;
 
 import common.*;
 import org.json.JSONObject;
+import protocol.Message;
+import protocol.RequestReplyProtocol;
 
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DepartamentoService {
+public class DepartamentoServiceImpl extends UnicastRemoteObject implements RemoteService {
 
     private final ConcurrentHashMap<Integer, Departamento> repositorio = new ConcurrentHashMap<>();
-    private final ColaboradorService colaboradorService;
+    private final ColaboradorServiceImpl colaboradorService;
+    private final RequestReplyProtocol protocol = new RequestReplyProtocol();
 
-    public DepartamentoService(ColaboradorService colaboradorService) {
+    public DepartamentoServiceImpl(ColaboradorServiceImpl colaboradorService) throws RemoteException {
+        super();
         this.colaboradorService = colaboradorService;
 
-        Colaborador gerente1 = colaboradorService.buscarPorId(4); // Eduardo (Efetivo)
+        Colaborador gerente1 = colaboradorService.buscarPorId(4);
         Departamento ti = new Departamento(1, "Tecnologia da Informação", gerente1);
-        ti.adicionarColaborador(colaboradorService.buscarPorId(1)); // Ana
-        ti.adicionarColaborador(colaboradorService.buscarPorId(2)); // Carlos
+        ti.adicionarColaborador(colaboradorService.buscarPorId(1));
+        ti.adicionarColaborador(colaboradorService.buscarPorId(2));
         repositorio.put(1, ti);
 
         Departamento design = new Departamento(2, "Design & UX", null);
-        design.adicionarColaborador(colaboradorService.buscarPorId(3)); // Diana
+        design.adicionarColaborador(colaboradorService.buscarPorId(3));
         repositorio.put(2, design);
     }
 
-    public byte[] invocar(String method, String argsJson) {
+    @Override
+    public byte[] processRequest(byte[] requestFrame) throws RemoteException {
+        try {
+            protocol.receiveIncoming(requestFrame);
+            protocol.getRequest();
+            Message req = protocol.getLastRequest();
+
+            System.out.println("[SERVER] Recebido: " + req);
+
+            byte[] result = invocar(req.getMethodId(), req.getArguments());
+            return protocol.sendReply(result, null, 0);
+
+        } catch (IOException e) {
+            throw new RemoteException("Erro ao processar requisição", e);
+        }
+    }
+
+    byte[] invocar(String method, String argsJson) {
         return switch (method) {
             case "criarDepartamento"                  -> criarDepartamento(argsJson);
             case "buscarDepartamento"                 -> buscarDepartamento(argsJson);
@@ -36,6 +60,7 @@ public class DepartamentoService {
             default -> erro("Método desconhecido: " + method);
         };
     }
+
     private byte[] criarDepartamento(String argsJson) {
         JSONObject args = new JSONObject(argsJson);
         int id = args.getInt("id");

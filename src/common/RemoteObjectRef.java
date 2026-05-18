@@ -2,9 +2,11 @@ package common;
 
 public class RemoteObjectRef {
 
+    public static final int DEFAULT_REGISTRY_PORT = 1099;
+
     private String host;
     private int port;
-    private String objectName; // nome do serviço: "ColaboradorService" | "DepartamentoService"
+    private String objectName; // nome no RMI Registry: "ColaboradorService" | "DepartamentoService"
 
     public RemoteObjectRef() {}
 

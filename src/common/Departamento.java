@@ -1,9 +1,12 @@
 package common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Departamento {
+public class Departamento implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int id;
     private String nome;
